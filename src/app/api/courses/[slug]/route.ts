@@ -29,19 +29,20 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
     instructor: user?.role === 'instructor',
   })
 
-  const first = lessons[0]
+  const current = lessons.find((item) => item.percent < 90) ?? lessons[0]
+  const raw = course.lessons.find((item) => item.id === current?.id) ?? course.lessons[0]
   return NextResponse.json({
     course: card,
     lessons,
-    lesson: first
+    lesson: current
       ? {
-          ...first,
-          quiz: course.lessons[0]?.quiz
+          ...current,
+          quiz: raw?.quiz
             ? {
-                prompt: course.lessons[0].quiz.prompt,
-                promptEn: course.lessons[0].quiz.promptEn,
-                options: JSON.parse(course.lessons[0].quiz.options) as string[],
-                optionsEn: JSON.parse(course.lessons[0].quiz.optionsEn) as string[],
+                prompt: raw.quiz.prompt,
+                promptEn: raw.quiz.promptEn,
+                options: JSON.parse(raw.quiz.options) as string[],
+                optionsEn: JSON.parse(raw.quiz.optionsEn) as string[],
               }
             : null,
         }

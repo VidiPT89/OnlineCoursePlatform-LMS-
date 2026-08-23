@@ -103,10 +103,31 @@ body {
   box-shadow: 0 0 40px rgba(255, 122, 0, 0.12);
 }
 
+.lift {
+  transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.45s ease;
+}
+
+.lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(255, 122, 0, 0.12);
+}
+
+.film {
+  padding: 0 18px;
+  border-radius: 1.4rem;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      #050505 0 10px,
+      #1a1000 10px 14px,
+      #050505 14px 24px
+    );
+}
+
 .reel {
   position: relative;
   overflow: hidden;
-  border-radius: 1.25rem;
+  border-radius: 0.85rem;
   aspect-ratio: 16 / 9;
   background: #0a0600;
 }

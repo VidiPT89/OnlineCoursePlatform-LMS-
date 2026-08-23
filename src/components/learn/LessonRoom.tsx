@@ -4,23 +4,22 @@ import { MuxLessonPlayer } from '@/components/player/MuxLessonPlayer'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { readJson } from '@/lib/http'
 import type { LessonRoomPayload } from '@/lib/types'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-
-const empty: LessonRoomPayload | null = null
 
 export function LessonRoom({ slug, lessonId }: { slug: string; lessonId?: string }) {
   const { t, locale } = useLocale()
-  const [data, setData] = useState<LessonRoomPayload | null>(empty)
+  const [data, setData] = useState<LessonRoomPayload | null>(null)
+  const [percent, setPercent] = useState(0)
   const [choice, setChoice] = useState<number | null>(null)
   const [quizState, setQuizState] = useState<'idle' | 'passed' | 'failed'>('idle')
 
   const load = useCallback(async () => {
-    if (lessonId) {
-      setData(await readJson(await fetch(`/api/lessons/${lessonId}`), null))
-      return
-    }
-    setData(await readJson(await fetch(`/api/courses/${slug}`), null))
+    const payload = lessonId
+      ? await readJson<LessonRoomPayload | null>(await fetch(`/api/lessons/${lessonId}`), null)
+      : await readJson<LessonRoomPayload | null>(await fetch(`/api/courses/${slug}`), null)
+    setData(payload)
+    if (payload?.lesson) setPercent(payload.lesson.percent)
   }, [lessonId, slug])
 
   useEffect(() => {
@@ -29,8 +28,26 @@ export function LessonRoom({ slug, lessonId }: { slug: string; lessonId?: string
 
   useEffect(() => {
     setChoice(null)
-    setQuizState('idle')
-  }, [data?.lesson.id])
+    setQuizState(data?.lesson.quizPassed ? 'passed' : 'idle')
+  }, [data?.lesson.id, data?.lesson.quizPassed])
+
+  const tick = useCallback(
+    (seconds: number, duration: number) => {
+      const next = Math.min(100, Math.round((seconds / duration) * 100))
+      setPercent(next)
+      void fetch(`/api/lessons/${data?.lesson.id}/progress`, {
+        method: 'POST',
+        body: JSON.stringify({ seconds, duration }),
+      })
+    },
+    [data?.lesson.id],
+  )
+
+  const nextLesson = useMemo(() => {
+    if (!data) return null
+    const index = data.lessons.findIndex((item) => item.id === data.lesson.id)
+    return data.lessons[index + 1] ?? null
+  }, [data])
 
   if (!data?.lesson) return <p className="text-[#f4e6c8]/60">{t.empty}</p>
 
@@ -38,15 +55,8 @@ export function LessonRoom({ slug, lessonId }: { slug: string; lessonId?: string
   const lessonTitle = locale === 'pt' ? data.lesson.title : data.lesson.titleEn
   const quiz = data.lesson.quiz
   const options = quiz ? (locale === 'pt' ? quiz.options : quiz.optionsEn) : []
+  const notes = locale === 'pt' ? data.lesson.notes : data.lesson.notesEn
   const currentLessonId = data.lesson.id
-
-  async function tick(seconds: number, duration: number) {
-    await fetch(`/api/lessons/${currentLessonId}/progress`, {
-      method: 'POST',
-      body: JSON.stringify({ seconds, duration }),
-    })
-    await load()
-  }
 
   async function answer() {
     if (choice === null) return
@@ -58,6 +68,15 @@ export function LessonRoom({ slug, lessonId }: { slug: string; lessonId?: string
       {},
     )
     setQuizState(result.passed ? 'passed' : 'failed')
+    await load()
+  }
+
+  async function markDone() {
+    await fetch(`/api/lessons/${currentLessonId}/progress`, {
+      method: 'POST',
+      body: JSON.stringify({ seconds: 96, duration: 96 }),
+    })
+    setPercent(100)
     await load()
   }
 
@@ -78,11 +97,36 @@ export function LessonRoom({ slug, lessonId }: { slug: string; lessonId?: string
             <div className="mt-4">
               <p className="text-xs tracking-[0.2em] text-[#ff7a00]">{title}</p>
               <h1 className="display text-4xl text-[#ffaa00]">{lessonTitle}</h1>
+              <p className="mt-1 text-xs text-[#f4e6c8]/45">{t.watchHint}</p>
               <div className="meter mt-3">
-                <span style={{ width: `${data.lesson.percent}%` }} />
+                <span style={{ width: `${percent}%` }} />
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={markDone}
+                  className="rounded-full border border-[#f4e6c8]/20 px-4 py-2 text-xs"
+                >
+                  {t.markDone}
+                </button>
+                {nextLesson && (
+                  <Link
+                    href={`/learn/${slug}/${nextLesson.id}`}
+                    className="rounded-full bg-[#ff7a00] px-4 py-2 text-xs font-bold text-black"
+                  >
+                    {t.next}
+                  </Link>
+                )}
               </div>
             </div>
           </>
+        )}
+
+        {data.access && notes && (
+          <article className="panel mt-6 p-6">
+            <p className="text-xs font-bold tracking-[0.18em] text-[#ff7a00]">{t.notes}</p>
+            <p className="mt-2 text-[#f4e6c8]/80">{notes}</p>
+          </article>
         )}
 
         {data.access && quiz && (
@@ -124,7 +168,10 @@ export function LessonRoom({ slug, lessonId }: { slug: string; lessonId?: string
                 className={`block rounded-2xl px-3 py-3 ${item.id === data.lesson.id ? 'bg-[#ff7a00] text-black' : 'border border-[#f4e6c8]/10'}`}
               >
                 <span className="block text-sm font-bold">{locale === 'pt' ? item.title : item.titleEn}</span>
-                <span className="text-xs opacity-70">{item.percent}%</span>
+                <span className="text-xs opacity-70">
+                  {item.id === data.lesson.id ? percent : item.percent}%
+                  {item.quizPassed ? ` · ${t.passed}` : ''}
+                </span>
               </Link>
             </li>
           ))}

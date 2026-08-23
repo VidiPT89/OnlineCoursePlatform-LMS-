@@ -42,6 +42,7 @@ export async function mapCourses(user: SessionUser | null): Promise<CourseCard[]
       priceCents: course.priceCents,
       hue: course.hue,
       lessons: course.lessons.length,
+      minutes: Math.round(course.lessons.reduce((sum, item) => sum + item.durationSec, 0) / 60),
       enrolled: hasCourseAccess({
         access: course.access,
         enrolled,
@@ -82,6 +83,8 @@ export async function lessonCards(courseId: string, userId?: string): Promise<Le
       completed: row?.completed ?? false,
       hasQuiz: Boolean(lesson.quiz),
       quizPassed: attempts.some((item) => item.quiz.lessonId === lesson.id),
+      notes: lesson.notes,
+      notesEn: lesson.notesEn,
     }
   })
 }

@@ -1,5 +1,6 @@
 import { clearSession, currentUser, setSession } from '@/lib/auth'
 import { mapCourses, muxEnabled, stripeReady, activeSubscription } from '@/lib/campus'
+import { enrollFreeCourses } from '@/lib/enroll'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
@@ -22,6 +23,7 @@ export async function POST(request: Request) {
   const user = await prisma.user.findUnique({ where: { id: body.userId } })
   if (!user) return NextResponse.json({ error: 'missing' }, { status: 404 })
   await setSession(user.id)
+  await enrollFreeCourses(user.id)
   return NextResponse.json({ ok: true })
 }
 

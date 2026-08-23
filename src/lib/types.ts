@@ -11,6 +11,7 @@ export type CourseCard = {
   priceCents: number
   hue: string
   lessons: number
+  minutes: number
   enrolled: boolean
   percent: number
   certificated: boolean
@@ -27,6 +28,8 @@ export type LessonCard = {
   completed: boolean
   quizPassed: boolean
   hasQuiz: boolean
+  notes: string
+  notesEn: string
 }
 
 export type CampusPayload = {

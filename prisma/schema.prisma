@@ -48,6 +48,8 @@ model Lesson {
   muxAssetId    String?
   playbackId    String
   durationSec   Int           @default(90)
+  notes         String        @default("")
+  notesEn       String        @default("")
   createdAt     DateTime      @default(now())
   quiz          Quiz?
   progress      Progress[]
