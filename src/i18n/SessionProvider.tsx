@@ -1,0 +1,42 @@
+'use client'
+
+import { readJson } from '@/lib/http'
+import type { CampusPayload } from '@/lib/types'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+
+const empty: CampusPayload = {
+  user: null,
+  demoUsers: [],
+  subscribed: false,
+  mux: false,
+  stripe: false,
+  courses: [],
+}
+
+type Ctx = {
+  data: CampusPayload
+  refresh: () => Promise<void>
+}
+
+const SessionContext = createContext<Ctx | null>(null)
+
+export function SessionProvider({ children }: { children: ReactNode }) {
+  const [data, setData] = useState<CampusPayload>(empty)
+
+  const refresh = useCallback(async () => {
+    setData(await readJson(await fetch('/api/session'), empty))
+  }, [])
+
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
+
+  const value = useMemo(() => ({ data, refresh }), [data, refresh])
+  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
+}
+
+export function useSession(): Ctx {
+  const ctx = useContext(SessionContext)
+  if (!ctx) throw new Error('SessionProvider missing')
+  return ctx
+}

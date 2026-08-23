@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String         @id @default(cuid())
+  email          String         @unique
+  name           String
+  role           String         @default("student")
+  createdAt      DateTime       @default(now())
+  enrollments    Enrollment[]
+  progress       Progress[]
+  quizAttempts   QuizAttempt[]
+  certificates   Certificate[]
+  subscriptions  Subscription[]
+  billing        BillingEvent[]
+}
+
+model Course {
+  id           String         @id @default(cuid())
+  slug         String         @unique
+  title        String
+  titleEn      String
+  synopsis     String
+  synopsisEn   String
+  access       String
+  priceCents   Int            @default(0)
+  hue          String         @default("ember")
+  createdAt    DateTime       @default(now())
+  lessons      Lesson[]
+  enrollments  Enrollment[]
+  certificates Certificate[]
+}
+
+model Lesson {
+  id            String        @id @default(cuid())
+  courseId      String
+  course        Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title         String
+  titleEn       String
+  position      Int
+  muxUploadId   String?
+  muxAssetId    String?
+  playbackId    String
+  durationSec   Int           @default(90)
+  createdAt     DateTime      @default(now())
+  quiz          Quiz?
+  progress      Progress[]
+
+  @@index([courseId, position])
+}
+
+model Quiz {
+  id        String        @id @default(cuid())
+  lessonId  String        @unique
+  lesson    Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  prompt    String
+  promptEn  String
+  options   String
+  optionsEn String
+  answer    Int
+  attempts  QuizAttempt[]
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  kind      String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
+
+model Progress {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId   String
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  seconds    Int      @default(0)
+  duration   Int      @default(0)
+  percent    Int      @default(0)
+  completed  Boolean  @default(false)
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId    String
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  choice    Int
+  passed    Boolean
+  createdAt DateTime @default(now())
+}
+
+model Certificate {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  serial     String   @unique
+  issuedAt   DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status               String
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+model BillingEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String
+  payload   String
+  createdAt DateTime @default(now())
+}

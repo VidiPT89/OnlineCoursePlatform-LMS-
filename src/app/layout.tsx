@@ -1,0 +1,46 @@
+import type { Metadata } from 'next'
+import { Barlow_Condensed, Karla } from 'next/font/google'
+import { Providers } from '@/components/layout/Providers'
+import { SiteChrome } from '@/components/layout/SiteChrome'
+import './globals.css'
+
+const display = Barlow_Condensed({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  variable: '--font-display',
+})
+
+const body = Karla({
+  subsets: ['latin'],
+  variable: '--font-body',
+})
+
+export const metadata: Metadata = {
+  title: 'AULA',
+  description: 'Video courses, progress tracking, quizzes and PDF certificates.',
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="pt-PT">
+      <body className={`${display.variable} ${body.variable} antialiased`}>
+        {/*
+          THESIS: AULA is a night classroom, not a pastel course marketplace.
+          OWN-WORLD: black ground, ember and amber, condensed display, grain and reel.
+          STORY: watch, answer, collect the paper.
+          FIRST VIEWPORT: mark AULA, language toggle, catalogue of three courses.
+          FORM: iVidi desk, pinned palette.
+          FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+        */}
+        <Providers>
+          <div className="sky" aria-hidden>
+            <span className="ember e1" />
+            <span className="ember e2" />
+          </div>
+          <div className="grain" aria-hidden />
+          <SiteChrome>{children}</SiteChrome>
+        </Providers>
+      </body>
+    </html>
+  )
+}
