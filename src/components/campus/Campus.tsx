@@ -85,8 +85,8 @@ export function Campus() {
       <section className="panel glow flex flex-wrap items-center justify-between gap-4 p-6">
         <div>
           <p className="display text-3xl text-[#ffaa00]">{t.subscription}</p>
-          <p className="text-sm text-[#f4e6c8]/70">
-            {t.passLead} · {t.passPrice}
+          <p className="max-w-xl text-sm text-[#f4e6c8]/70">
+            {t.passLead} {t.passPrice}
           </p>
         </div>
         {data.subscribed ? (

@@ -14,8 +14,9 @@ export function SiteChrome({ children }: { children: ReactNode }) {
     <div className="relative z-10 min-h-dvh">
       <header className="sticky top-4 z-20 mx-auto w-[min(1280px,calc(100%-1.5rem))]">
         <div className="flex items-center justify-between gap-3 rounded-full border border-[#f4e6c8]/12 bg-black/70 px-4 py-2 backdrop-blur-md">
-          <Link href="/" className="display text-xl tracking-[0.28em] text-[#ffaa00]">
-            {t.brand}
+          <Link href="/" className="flex items-center gap-2">
+            <span className="display text-xl tracking-[0.28em] text-[#ffaa00]">{t.brand}</span>
+            <span className="hidden text-[10px] tracking-[0.12em] text-[#f4e6c8]/50 sm:inline">{t.product}</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/campus" className="text-xs font-bold tracking-[0.16em] text-[#ff7a00]">

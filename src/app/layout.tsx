@@ -16,8 +16,8 @@ const body = Karla({
 })
 
 export const metadata: Metadata = {
-  title: 'AULA',
-  description: 'Video courses, progress tracking, quizzes and PDF certificates.',
+  title: 'AULA · Online course platform (LMS)',
+  description: 'LMS with Mux video, lesson progress, quizzes, PDF certificates and Stripe (course or subscription).'
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
