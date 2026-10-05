@@ -1,5 +1,21 @@
+// Helvetica is a standard Type1 font: its strings are read in WinAnsiEncoding, one byte per
+// character. Writing UTF-8 turned "José Conceição" into "JosÃ© ConceiÃ§Ã£o" on the certificate.
+const WIN_ANSI_EXTRAS: Record<string, number> = {
+  '€': 0x80, '‚': 0x82, '„': 0x84, '…': 0x85, '‘': 0x91, '’': 0x92,
+  '“': 0x93, '”': 0x94, '•': 0x95, '–': 0x96, '—': 0x97, '™': 0x99,
+}
+
+function toWinAnsi(text: string) {
+  return Array.from(text, (char) => {
+    const code = char.codePointAt(0) ?? 0x3f
+    if (code < 0x80 || (code >= 0xa0 && code <= 0xff)) return char
+    const extra = WIN_ANSI_EXTRAS[char]
+    return extra ? String.fromCharCode(extra) : '?'
+  }).join('')
+}
+
 function escapePdf(text: string) {
-  return text.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
+  return toWinAnsi(text).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
 }
 
 export function certificatePdf(input: {
@@ -59,8 +75,8 @@ ${content}
     '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj',
     '2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj',
     '3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj',
-    `4 0 obj << /Length ${Buffer.byteLength(stream)} >> stream\n${stream}\nendstream endobj`,
-    '5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj',
+    `4 0 obj << /Length ${Buffer.byteLength(stream, 'latin1')} >> stream\n${stream}\nendstream endobj`,
+    '5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >> endobj',
   ]
 
   let offset = 9
@@ -69,7 +85,7 @@ ${content}
     .map((object) => {
       xref.push(`${String(offset).padStart(10, '0')} 00000 n `)
       const chunk = `${object}\n`
-      offset += Buffer.byteLength(chunk)
+      offset += Buffer.byteLength(chunk, 'latin1')
       return chunk
     })
     .join('')
@@ -83,7 +99,8 @@ startxref
 ${offset}
 %%EOF
 `
-  return Buffer.from(pdf)
+  // Every character is already one WinAnsi byte, so latin1 writes them as they are.
+  return Buffer.from(pdf, 'latin1')
 }
 
 export function serialFor(userId: string, courseId: string) {
