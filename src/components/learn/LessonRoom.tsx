@@ -7,6 +7,11 @@ import type { LessonRoomPayload } from '@/lib/types'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 
+async function fetchRoom(slug: string, lessonId?: string): Promise<LessonRoomPayload | null> {
+  const res = await fetch(lessonId ? `/api/lessons/${lessonId}` : `/api/courses/${slug}`)
+  return readJson<LessonRoomPayload | null>(res, null)
+}
+
 export function LessonRoom({ slug, lessonId }: { slug: string; lessonId?: string }) {
   const { t, locale } = useLocale()
   const [data, setData] = useState<LessonRoomPayload | null>(null)
@@ -14,22 +19,37 @@ export function LessonRoom({ slug, lessonId }: { slug: string; lessonId?: string
   const [choice, setChoice] = useState<number | null>(null)
   const [quizState, setQuizState] = useState<'idle' | 'passed' | 'failed'>('idle')
 
-  const load = useCallback(async () => {
-    const payload = lessonId
-      ? await readJson<LessonRoomPayload | null>(await fetch(`/api/lessons/${lessonId}`), null)
-      : await readJson<LessonRoomPayload | null>(await fetch(`/api/courses/${slug}`), null)
+  const apply = useCallback((payload: LessonRoomPayload | null) => {
     setData(payload)
     if (payload?.lesson) setPercent(payload.lesson.percent)
-  }, [lessonId, slug])
+  }, [])
+
+  const load = useCallback(async () => {
+    apply(await fetchRoom(slug, lessonId))
+  }, [apply, lessonId, slug])
 
   useEffect(() => {
-    void load()
-  }, [load])
+    let ignore = false
+    fetchRoom(slug, lessonId)
+      .then((payload) => {
+        if (!ignore) apply(payload)
+      })
+      .catch(() => {
+        /* offline: show the empty state */
+      })
+    return () => {
+      ignore = true
+    }
+  }, [apply, lessonId, slug])
 
-  useEffect(() => {
+  // A new lesson (or a quiz passed elsewhere) resets the quiz while rendering, not in an effect.
+  const quizKey = `${data?.lesson.id}:${data?.lesson.quizPassed}`
+  const [seenQuizKey, setSeenQuizKey] = useState(quizKey)
+  if (seenQuizKey !== quizKey) {
+    setSeenQuizKey(quizKey)
     setChoice(null)
     setQuizState(data?.lesson.quizPassed ? 'passed' : 'idle')
-  }, [data?.lesson.id, data?.lesson.quizPassed])
+  }
 
   const tick = useCallback(
     (seconds: number, duration: number) => {
