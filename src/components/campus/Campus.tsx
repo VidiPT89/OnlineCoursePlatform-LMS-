@@ -50,7 +50,8 @@ export function Campus() {
           <h1 className="display text-5xl text-[#ffaa00]">{t.catalog}</h1>
           <p className="mt-2 text-sm text-[#f4e6c8]/70">{data.user ? data.user.name : t.demoHint}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div role="group" aria-label={t.signIn} className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-[#f4e6c8]/60">{t.signIn}</span>
           {data.demoUsers.map((user) => (
             <button
               key={user.id}
