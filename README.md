@@ -2,6 +2,8 @@
 
 > A bilingual classroom in Cascais: Mux video uploads, a player that tracks progress, a quiz on every lesson, a PDF certificate at the end, and Stripe for a single course or a monthly pass, painted in the ividi.dev palette (black, burnt orange, amber).
 
+[![CI](https://github.com/VidiPT89/OnlineCoursePlatform-LMS-/actions/workflows/ci.yml/badge.svg)](https://github.com/VidiPT89/OnlineCoursePlatform-LMS-/actions/workflows/ci.yml)
+
 [🐞 Report Bug](https://github.com/VidiPT89/OnlineCoursePlatform-LMS-/issues) · [✨ Request Feature](https://github.com/VidiPT89/OnlineCoursePlatform-LMS-/issues)
 
 AULA is a Next.js learning desk. The catalogue has an open course, a paid street course and a darkroom course that only opens with the monthly pass. Lessons play through Mux (a public demo reel when keys are empty). Watch time is stored as percent complete. Each lesson has a quiz. Finish every lesson and pass every quiz to download a PDF certificate. The UI is European Portuguese / English, with the language toggle remembered in `localStorage`.
